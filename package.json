@@ -32,6 +32,7 @@
     "postdocs": "echo 'future: true\nencoding: \"UTF-8\"\ninclude:\n  - \"_*_.html\"\n  - \"_*_.*.html\"' > ./docs/_config.yaml",
     "lint": "eslint . --ext .ts --cache",
     "lint:fix": "yarn lint --fix",
+    "prepare": "yarn compile",
     "test": "jest",
     "test:coverage": "yarn test --coverage",
     "prepublish": "yarn build"
