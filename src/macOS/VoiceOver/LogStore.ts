@@ -206,10 +206,10 @@ export class LogStore {
         const approxWords = countApproxWords(phrase);
 
         stableCount = 0;
-        // Reduced speech delay multiplier from 1000 to 500 (50% faster polling)
-        // for AI agent use case where speed is critical
+        // Reduced speech delay multiplier from 500 to 50 for muted/max-speed VoiceOver
+        // With muted VO, phrase is available instantly - no need to wait for speech
         pollTimeout =
-          (approxWords / APPROX_WORDS_PER_SECOND) * 500 +
+          (approxWords / APPROX_WORDS_PER_SECOND) * 50 +
           SPOKEN_PHRASES_POLL_INTERVAL;
 
         phrases.push(phrase);
