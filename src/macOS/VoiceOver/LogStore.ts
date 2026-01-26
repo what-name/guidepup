@@ -2,6 +2,7 @@ import {
   APPROX_WORDS_PER_SECOND,
   ITEM_TEXT_POLL_INTERVAL,
   ITEM_TEXT_RETRY_COUNT,
+  MAX_SPOKEN_PHRASES_POLL_COUNT,
   SPOKEN_PHRASES_POLL_INTERVAL,
   SPOKEN_PHRASES_RETRY_COUNT,
 } from "./constants";
@@ -174,9 +175,9 @@ export class LogStore {
     const phrases = [];
     let stableCount = 0;
     let pollCount = 0;
+    const startTime = Date.now(); // Track total elapsed time
 
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
+    while (pollCount < MAX_SPOKEN_PHRASES_POLL_COUNT) {
       let rawLastSpokenPhrase = "";
 
       try {
@@ -205,8 +206,10 @@ export class LogStore {
         const approxWords = countApproxWords(phrase);
 
         stableCount = 0;
+        // Reduced speech delay multiplier from 500 to 50 for muted/max-speed VoiceOver
+        // With muted VO, phrase is available instantly - no need to wait for speech
         pollTimeout =
-          (approxWords / APPROX_WORDS_PER_SECOND) * 1000 +
+          (approxWords / APPROX_WORDS_PER_SECOND) * 50 +
           SPOKEN_PHRASES_POLL_INTERVAL;
 
         phrases.push(phrase);
@@ -223,6 +226,21 @@ export class LogStore {
 
       pollCount++;
     }
+
+    // Logging: Track stabilization vs timeout performance
+    const elapsedMs = Date.now() - startTime;
+    const elapsedSec = (elapsedMs / 1000).toFixed(2);
+    const hitTimeout = pollCount >= MAX_SPOKEN_PHRASES_POLL_COUNT;
+    const captureMode = options?.capture ?? this.#capture;
+
+    if (hitTimeout) {
+      console.warn(`[Guidepup] ⏱️  TIMEOUT after ${pollCount} polls (${elapsedSec}s) | phrases: ${phrases.length} | capture: ${captureMode}`);
+    } else if (pollCount > 30) {
+      console.warn(`[Guidepup] ⚠️  SLOW stabilization: ${pollCount} polls (${elapsedSec}s) | phrases: ${phrases.length}`);
+    } else if (pollCount > 25) {
+      console.log(`[Guidepup] 📊 Stabilized after ${pollCount} polls (${elapsedSec}s) | phrases: ${phrases.length}`);
+    }
+    // Skip logging for fast cases (pollCount <= 25) to reduce noise
 
     return phrases.filter(Boolean).join(". ");
   }

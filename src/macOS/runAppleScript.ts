@@ -9,7 +9,7 @@ export async function runAppleScript<T = string | void>(
 
   return (await new Promise<string | void>((resolve, reject) => {
     const child = execFile(
-      "/usr/bin/osascript",
+      "osascript",
       [],
       {
         maxBuffer: DEFAULT_MAX_BUFFER,
